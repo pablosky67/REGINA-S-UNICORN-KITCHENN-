@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Regina's Unicorn Kitchen — Estaciones Mágicas 🦄💗</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <div id="game-container"></div>
+
+  <!-- Pantalla de Carga -->
+  <div id="loading-screen" class="screen active">
+    <div class="magic-bg"></div>
+    <div class="loading-card">
+      <div class="unicorn-emblem">🦄✨</div>
+      <h1>Regina's Unicorn Kitchen</h1>
+      <p id="loading-status">Preparando las 6 estaciones mágicas sin prisas...</p>
+      <div class="progress-bar-wrap">
+        <div id="loading-bar" class="progress-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menú Principal -->
+  <div id="main-menu" class="screen">
+    <div class="magic-bg"></div>
+    <div class="menu-wrapper">
+      <div class="logo-box">
+        <div class="badge-top">✨ Cocción por Estaciones · Sin Temporizador · 60+ Recetas ✨</div>
+        <div class="logo-icon">🦄🧁🍣🍕</div>
+        <h1 class="game-title">Regina's<br><span>Unicorn Kitchen</span></h1>
+        <p class="subtitle">Prepara, arma y decora a tu ritmo con clientes adorables y personalización total</p>
+      </div>
+
+      <div class="menu-buttons">
+        <button id="btn-play" class="btn-magic primary">
+          <span class="btn-icon">🍳</span> ENTRAR A LA COCINA
+        </button>
+        <button id="btn-recipes-menu" class="btn-magic secondary">
+          <span class="btn-icon">📖</span> LIBRO DE RECETAS (<span id="menu-discovered-count">0</span>/<span id="menu-total-recipes">60</span>)
+        </button>
+        <button id="btn-customize-menu" class="btn-magic tertiary">
+          <span class="btn-icon">👗</span> VESTIDOR DE REGINA
+        </button>
+        <button id="btn-worlds-menu" class="btn-magic quaternary">
+          <span class="btn-icon">🏰</span> ESCENARIOS MÁGICOS
+        </button>
+        <button id="btn-settings-menu" class="btn-magic neutral">
+          <span class="btn-icon">⚙️</span> CONFIGURACIÓN
+        </button>
+      </div>
+
+      <div class="regina-dedication">
+        💗 Un estudio culinario mágico hecho con cariño para <strong>Regina</strong> 🦄
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD In-Game -->
+  <div id="hud" class="hidden">
+    <div class="hud-top">
+      <div class="hud-pill world-badge" id="hud-world-name">🌈 Cocina del Reino Arcoíris</div>
+      <div class="hud-pill stats-badge">
+        <span>⭐ <strong id="hud-stars">0</strong></span>
+        <span class="sep">|</span>
+        <span>📖 <strong id="hud-recipes">0</strong>/<span id="hud-total-recipes">60</span></span>
+        <span class="sep">|</span>
+        <span>🕊️ Modo Sin Prisas</span>
+      </div>
+      <div class="hud-top-actions">
+        <button id="btn-hud-stations-bar" class="hud-icon-btn" title="Ir rápido a estación">🧭</button>
+        <button id="btn-hud-recipes" class="hud-icon-btn" title="Libro de Recetas">📖</button>
+        <button id="btn-hud-customize" class="hud-icon-btn" title="Vestidor">👗</button>
+        <button id="btn-hud-worlds" class="hud-icon-btn" title="Escenarios">🏰</button>
+        <button id="btn-hud-camera" class="hud-icon-btn" title="Ángulo de Cámara">🎥</button>
+        <button id="btn-hud-pause" class="hud-icon-btn" title="Pausa">⏸️</button>
+      </div>
+    </div>
+
+    <!-- Barra rápida de las 6 Estaciones -->
+    <div id="stations-quick-nav" class="stations-quick-nav">
+      <button class="st-nav-btn active" data-st="order">1️⃣ Pedidos</button>
+      <button class="st-nav-btn" data-st="prep">2️⃣ Preparación</button>
+      <button class="st-nav-btn" data-st="cook">3️⃣ Cocción</button>
+      <button class="st-nav-btn" data-st="build">4️⃣ Montaje</button>
+      <button class="st-nav-btn" data-st="decorate">5️⃣ Decoración</button>
+      <button class="st-nav-btn" data-st="serve">6️⃣ Entrega</button>
+    </div>
+
+    <!-- Ticket de Pedido Activo -->
+    <div id="order-ticket-panel" class="order-ticket-panel">
+      <div class="ticket-header">
+        <span id="ticket-customer-badge">🦄 Cliente esperando</span>
+        <button id="btn-new-customer-order" class="mini-pill-btn" title="Cambiar o pedir nuevo cliente">🔄 Nuevo</button>
+      </div>
+      <div id="ticket-body" class="ticket-body"></div>
+    </div>
+
+    <div class="hud-center-prompts">
+      <div id="station-prompt" class="station-prompt hidden">
+        <span id="station-prompt-icon">🧾</span>
+        <span id="station-prompt-text">Estación de Pedidos</span>
+      </div>
+      <div id="held-item-banner" class="held-banner hidden">
+        <span>Platillo en proceso:</span>
+        <strong id="held-item-name">Nada</strong>
+      </div>
+    </div>
+
+    <!-- Overlay Interactivo de Estación / Minijuego -->
+    <div id="station-workspace-overlay" class="workspace-overlay hidden">
+      <div class="workspace-card">
+        <div class="ws-header">
+          <h3 id="ws-title">🔪 Estación de Preparación</h3>
+          <button id="btn-ws-close" class="close-modal">✕</button>
+        </div>
+        <p id="ws-subtitle" class="ws-subtitle">Tómate todo el tiempo que quieras · Sin límite de tiempo</p>
+        <div id="ws-content" class="ws-content"></div>
+      </div>
+    </div>
+
+    <div class="hud-bottom">
+      <div id="joystick-zone" class="joystick-zone">
+        <div id="joystick-base" class="joystick-base">
+          <div id="joystick-stick" class="joystick-stick">🦄</div>
+        </div>
+        <span class="control-hint">Mover (WASD / Flechas o Clic en Estación)</span>
+      </div>
+
+      <div class="action-buttons-zone">
+        <button id="btn-action-interact" class="action-btn btn-interact">
+          <span class="act-icon">✨</span>
+          <span class="act-label">ABRIR ESTACIÓN</span>
+        </button>
+        <div class="action-subrow">
+          <button id="btn-action-pickup" class="action-btn btn-pickup">
+            <span class="act-icon">🤲</span>
+            <span class="act-label">RECOGER / DEJAR</span>
+          </button>
+          <button id="btn-action-drop" class="action-btn btn-drop">
+            <span class="act-icon">🗑️</span>
+            <span class="act-label">LIMPIAR MESA</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Libro de Recetas -->
+  <div id="modal-recipes" class="modal hidden">
+    <div class="modal-card xlarge-modal">
+      <div class="modal-header">
+        <h2>📖 Libro Mágico de Cocina (<span id="modal-discovered-count">0</span>/<span id="modal-total-count">60</span>)</h2>
+        <button class="close-modal" data-close="modal-recipes">✕</button>
+      </div>
+      <div class="recipe-filters" id="recipe-filters">
+        <button class="filter-btn active" data-cat="ALL">Todas</button>
+        <button class="filter-btn" data-cat="REPOSTERIA">🧁 Repostería</button>
+        <button class="filter-btn" data-cat="COMIDA">🍕 Platillos</button>
+        <button class="filter-btn" data-cat="BEBIDAS">🥤 Bebidas</button>
+        <button class="filter-btn" data-cat="SUSHI_BOWLS">🍣 Sushi y Bowls</button>
+        <button class="filter-btn" data-cat="MAGICOS">🦄 Mágicos</button>
+        <button class="filter-btn" data-cat="FAVORITES">💗 Favoritas</button>
+      </div>
+      <div class="recipes-split">
+        <div class="recipes-list" id="recipes-list"></div>
+        <div class="recipe-detail" id="recipe-detail">
+          <div class="empty-detail">Selecciona una receta para ver su preparación por estaciones y cargarla en tu mesa ✨</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Personalización -->
+  <div id="modal-customize" class="modal hidden">
+    <div class="modal-card large-modal">
+      <div class="modal-header">
+        <h2>👗 Vestidor Mágico de Regina</h2>
+        <button class="close-modal" data-close="modal-customize">✕</button>
+      </div>
+      <div class="customize-grid">
+        <div class="custom-section">
+          <h3>🎀 Gorritos y Diademas</h3>
+          <div class="custom-options" id="opt-hats"></div>
+        </div>
+        <div class="custom-section">
+          <h3>👗 Vestidos y Delantales</h3>
+          <div class="custom-options" id="opt-outfits"></div>
+        </div>
+        <div class="custom-section">
+          <h3>💇‍♀️ Color de Cabello</h3>
+          <div class="custom-options" id="opt-hair"></div>
+        </div>
+        <div class="custom-section">
+          <h3>🦄 Mascota Unicornio</h3>
+          <div class="custom-options" id="opt-pet"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Escenarios -->
+  <div id="modal-worlds" class="modal hidden">
+    <div class="modal-card large-modal">
+      <div class="modal-header">
+        <h2>🏰 Escenarios Mágicos</h2>
+        <button class="close-modal" data-close="modal-worlds">✕</button>
+      </div>
+      <p class="modal-sub">Cocina pedidos y recetas para ganar Estrellas Mágicas ⭐ y desbloquear nuevas cocinas temáticas</p>
+      <div class="worlds-grid" id="worlds-grid"></div>
+    </div>
+  </div>
+
+  <!-- Modal: Configuración -->
+  <div id="modal-settings" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>⚙️ Configuración</h2>
+        <button class="close-modal" data-close="modal-settings">✕</button>
+      </div>
+      <div class="settings-list">
+        <label class="setting-row">
+          <span>🎵 Música Ambiental Mágica</span>
+          <input type="checkbox" id="set-music" checked />
+        </label>
+        <label class="setting-row">
+          <span>🔊 Efectos de Sonido de Estaciones</span>
+          <input type="checkbox" id="set-sfx" checked />
+        </label>
+        <label class="setting-row">
+          <span>✨ Partículas y Brillos</span>
+          <input type="checkbox" id="set-particles" checked />
+        </label>
+        <label class="setting-row">
+          <span>📱 Calidad Gráfica 3D</span>
+          <select id="set-quality">
+            <option value="high">Alta (Sombras y Brillos)</option>
+            <option value="medium" selected>Equilibrada (Móvil Óptimo)</option>
+            <option value="low">Ahorro de Batería</option>
+          </select>
+        </label>
+        <div class="setting-actions">
+          <button id="btn-unlock-all" class="btn-magic secondary small">🎁 Desbloquear Todo (60+ Recetas, Clientes y Escenarios)</button>
+          <button id="btn-reset-save" class="btn-magic neutral small">🔄 Reiniciar Progreso</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Pausa -->
+  <div id="modal-pause" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>⏸️ Cocina en Pausa</h2>
+        <button class="close-modal" data-close="modal-pause">✕</button>
+      </div>
+      <div class="pause-buttons">
+        <button class="btn-magic primary close-modal" data-close="modal-pause">▶️ Seguir Cocinando</button>
+        <button id="btn-pause-recipes" class="btn-magic secondary">📖 Libro de Recetas</button>
+        <button id="btn-pause-customize" class="btn-magic tertiary">👗 Vestidor</button>
+        <button id="btn-pause-settings" class="btn-magic neutral">⚙️ Configuración</button>
+        <button id="btn-pause-home" class="btn-magic neutral">🏠 Menú Principal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner de Reacción del Cliente / Celebración -->
+  <div id="celebration-banner" class="celebration-banner hidden">
+    <div class="celeb-content">
+      <div class="celeb-icon" id="celeb-icon">😍</div>
+      <div class="celeb-text">
+        <span class="celeb-tag" id="celeb-tag">¡CLIENTE ENCANTADO!</span>
+        <h3 id="celeb-title">Pastel de Unicornio</h3>
+        <p id="celeb-desc">¡Le encantó tu toque especial! +3 Estrellas Mágicas ⭐</p>
+      </div>
+      <button id="btn-fav-last" class="fav-heart-btn" title="Guardar en Favoritas">🤍</button>
+    </div>
+  </div>
+
+  <script src="audio.js"></script>
+  <script src="recipes.js"></script>
+  <script src="world.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
